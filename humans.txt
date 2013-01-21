@@ -1,0 +1,12 @@
+/* Author */
+Dev: Mário Gonçalves
+Site: http://linkedin.com/in/mariomcgoncalves/
+Contact: mario.mc.goncalves (at) gmail.com
+
+/* PROPS TO */
+Ink Team : http://ink.sapo.pt/index.php/about
+
+/* SITE */
+Tools: HTML5 Boilerplate
+Standards: HTML5, CSS3, JavaScript
+Components: Modernizr, libsapojs
