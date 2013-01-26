@@ -105,7 +105,7 @@ function generate_popup(data) {
 				skill += "<li>" + draw_skill(value) + "</li>";
 				});
 				skill += '</ul></nav>';
-			//	return skill;
+				return skill;
 			};
 			sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m100 ink-s100">' + data[property].toString().replace(/\n/g, '<br />') + '</div></div>';
 			break;
