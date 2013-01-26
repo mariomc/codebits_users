@@ -54,7 +54,7 @@ function detalhes(user_id) {
 		console.log("cached");
 	} else {
 		//If not, get the data from the endpoint
-		var user = new SAPO.Communication.JsonP(
+		user = new SAPO.Communication.JsonP(
 				"https://services.sapo.pt/Codebits/user/" + user_id + "?callback=detalhes_callback&token=" + user_token, {
 				onComplete : function (data) {
 					console.log("completed ajax call");
