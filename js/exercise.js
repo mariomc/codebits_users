@@ -1,5 +1,6 @@
 // Avoid `console` errors in browsers that lack a console.
 //Copy pasta from HTML5 Boilerplate.
+
 (function () {
 	var method;
 	var noop = function () {};
@@ -31,15 +32,16 @@ function detalhes_callback(data) {
 		return false;
 	}
 	//Update the cache for the user. Print it out in a modal box
-	SAPO.Utility.Cache.upsert(data.id, data, 600);
+	SAPO.Utility.Cache.upsert(data.id, SAPO.Utility.Serialize.get(data), 600);
 	var modal = SAPO.Dom.Selector.select('#xpto')[0];
 	modal.innerHTML = generate_popup(data);
 	//console.log(modal.innerHTML, "Inner HTML");
 	//Define Max Width
 	var modal_width = 940;
 	//Define custom width for smaller screens
-	if (document.documentElement.clientWidth < 940)	modal_width = document.documentElement.clientWidth - 20;
-		mod = new SAPO.Ink.Modal('#xpto', {
+	if (document.documentElement.clientWidth < 940)
+		modal_width = document.documentElement.clientWidth - 20;
+	mod = new SAPO.Ink.Modal('#xpto', {
 			//closeOnClick : true
 			resize : true,
 			width : modal_width
@@ -50,16 +52,18 @@ function detalhes(user_id) {
 	var user = SAPO.Utility.Cache.get(user_id);
 	//If so, print the details
 	if (user) {
+		//transform the string into a json object
+		user = JSON.parse(user);
 		detalhes_callback(user);
 		console.log("cached");
 	} else {
 		//If not, get the data from the endpoint
-		user = new SAPO.Communication.JsonP(
-				"https://services.sapo.pt/Codebits/user/" + user_id + "?callback=detalhes_callback&token=" + user_token, {
-				onComplete : function (data) {
-					console.log("completed ajax call");
-				}
-			});
+		new SAPO.Communication.JsonP(
+			"https://services.sapo.pt/Codebits/user/" + user_id + "?callback=detalhes_callback&token=" + user_token, {
+			onComplete : function (data) {
+				console.log("completed ajax call");
+			}
+		});
 		console.log("not in cache");
 	}
 }
@@ -68,23 +72,27 @@ function draw_badge(id) {
 	//@SAPO pls fix the "not-available" images :P
 	//83: It's a trap!!
 	//95 too!
-	var exceptions = [20, 43, 51, 83, 95];
-	if(SAPO.Utility.Array.inArray(id, exceptions)) id = 0;
-	return '<a href="https://codebits.eu/s/badges/'+id+'" target="_blank"><img width="32" height="32" alt="Codebits Badge" src="https://codebits.eu/imgs/b/2012/' + id + '_normal.png"/></a>';
+	var exceptions = ["20", "43", "51", "83", "95"];
+	var img;
+	//check if it's one of the exceptions
+	if (SAPO.Utility.Array.inArray(id, exceptions))
+		id = 0;
+	img = id ? 'https://codebits.eu/imgs/b/2012/' : 'https://codebits.eu/imgs/b/';
+	return '<a href="https://codebits.eu/s/badges/' + id + '" target="_blank"><img width="32" height="32" alt="Codebits Badge" src="' + img + id + '_normal.png"/></a>';
 }
 function draw_avatar(id, nick) {
-	return '<a href="https://codebits.eu/'+ nick +'" target="_blank"><img width="100" height="100" alt="User" src="https://codebits.eu/avatars/' + id + '?s=100" class="ink-space" /></a>';
+	return '<a href="https://codebits.eu/' + nick + '" target="_blank"><img width="100" height="100" alt="User" src="https://codebits.eu/avatars/' + id + '?s=100" class="ink-space" /></a>';
 }
-function draw_skill(skill){
-	return '<a href="https://codebits.eu/intra/s/skill/'+ skill +'" target="_blank">' + skill + '</a>';
+function draw_skill(skill) {
+	return '<a href="https://codebits.eu/intra/s/skill/' + skill + '" target="_blank">' + skill + '</a>';
 }
-function draw_twitter(username){
-	var link = '<a href="http://twitter.com/'+ username +'" target="_blank">' + username + '</a>';
+function draw_twitter(username) {
+	var link = '<a href="http://twitter.com/' + username + '" target="_blank">' + username + '</a>';
 	return link;
 }
 //Generic url formatting function. I'm sure you guys have this somewhere in the SAPO.Utility package. Time was short to search for it.
-function draw_url(url){
-	return '<a href="'+ url +'" target="_blank">' + url + '</a>';
+function draw_url(url) {
+	return '<a href="' + url + '" target="_blank">' + url + '</a>';
 }
 function generate_popup(data) {
 	var sidebar = '';
@@ -92,32 +100,30 @@ function generate_popup(data) {
 		//Add values here to hide these
 		var hide = ['name', 'md5mail', 'avatar', 'id', 'nick', 'checkin_date', 'status', 'badges', 'bio'];
 		if ((data[property] != "") && !SAPO.Utility.Array.inArray(property, hide)) {
-		//Sorry for the ugly switch. Will improve this.
+			//Sorry for the ugly switch. Will improve this.
 			switch (property) {
 			case 'md5mail':
 				sidebar += draw_avatar(data[property], data['nick']);
 				break;
 			case 'skills':
-			var skills = data[property];
-			skills.toString = function () {
-			var skill = '<nav class="ink-navigation"><ul class="pills">';
-			SAPO.Utility.Array.each(this, function (value, array) {
-				skill += "<li>" + draw_skill(value) + "</li>";
-				});
-				skill += '</ul></nav>';
-				return skill;
-			};
-			sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m100 ink-s100">' + data[property].toString().replace(/\n/g, '<br />') + '</div></div>';
-			break;
-			 case 'coderep':
-			 case 'blog':
-			 data[property] = draw_url(data[property]);
-			 sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m70 ink-s70"><p>' + data[property].toString().replace(/\n/g, '<br />') + '</p></div></div>';
-			 break;
-			 case 'twitter':
-			 data[property] = draw_twitter(data[property]);
-			 sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m70 ink-s70"><p>' + data[property].toString().replace(/\n/g, '<br />') + '</p></div></div>';
-			 break;
+				var skills = data[property];
+				skills.toString = function () {
+					var skill = '<nav class="ink-navigation"><ul class="pills">';
+					SAPO.Utility.Array.each(this, function (value, array) {
+						skill += "<li>" + draw_skill(value) + "</li>";
+					});
+					skill += '</ul></nav>';
+					return skill;
+				};
+				sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m100 ink-s100">' + data[property].toString().replace(/\n/g, '<br />') + '</div></div>';
+				break;
+			case 'coderep':
+			case 'blog':
+				sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m70 ink-s70"><p>' + data[property].toString().replace(/\n/g, '<br />') + '</p></div></div>';
+				break;
+			case 'twitter':
+				sidebar += '<div class="ink-row"><h5 class="ink-l100 ink-m30 ink-s30 user-' + property + '">' + property + '</h5><div class="ink-l100 ink-m70 ink-s70"><p>' + data[property].toString().replace(/\n/g, '<br />') + '</p></div></div>';
+				break;
 			case 'badges':
 				//console.log(badges);
 			default:
@@ -131,120 +137,216 @@ function generate_popup(data) {
 		var images = "";
 		SAPO.Utility.Array.each(this, function (value, array) {
 			images += draw_badge(value);
-			});
-			return images;
-		};
-			var html = '<div class="ink-container" style="max-width: 100%; box-sizing: border-box; height: auto;">';
-			html += '<div class="ink-l100"><div class="ink-l100"><h2>' + data["name"] + '</h2></div><div class="ink-l20 ink-m100 ink-s100">' + draw_avatar(data["md5mail"], data["nick"]) + sidebar + '</div><div class="ink-l80 ink-m100 ink-s100"><p>' + data["bio"].replace(/\n/g, '<br />') + '</p><p>' + badges.toString().replace(/\n/g, '<br />') + '</p></div></div>';
-			html += '</div>';
-			return html;
-		}
-		//Callback to build the user table
-		function build_user_table(data) {
-			var t1 = new SAPO.Ink.Table(
-					'#t2', {
-					model : data,
-					fields : ['md5mail', 'name', 'twitter'],
-					sortableFields : '*',
-					fieldNames : {
-						md5mail : 'Imagem',
-						name : 'Nome',
-						twitter : 'Twitter'
-					},
-					formatters : {
-						md5mail : function (fieldValue, item, tdEl) {
-							if (!fieldValue)
-								return;
-							//console.log(fieldValue,item,tdEl);
-							tdEl.innerHTML = '<img width="50" height="50" class="user_image" onclick="detalhes(' + item.id + ')" data-id="' + item.id + '" src="https://codebits.eu/avatars/' + fieldValue + '?s=50" />';
-						}
-					},
-					pageSize : 50
-				});
-			//Animate it. Just for the kicks. 
-			SAPO.Effects.Slide.up('login', {
-				dur : 500
-			});
-		}
-		//Authenticate function
-		function authenticate(data) {
-		//If we receive a response and a token
-			if (data && data.token) {
-				//Set cookies so we don't have to run the ajax call again
-				if (data.token)
-					SAPO.Utility.Cookie.set("token", data.token, 600);
-				//TODO: I'll use this somewhere in the near future. "Stay tooned"
-				if (data.uid)
-					SAPO.Utility.Cookie.set("uid", data.uid, 600);
-				
-				user_token = data.token;
-				show_user_table();
-			} else {
-				//If we don't have a token or a data, we'll show an error message
-				//console.log(data);
-				console.log("Login Failed");
-				var message_string = "Ocorreu um erro";
-				if (data.error.msg)
-					message_string = data.error.msg;
-				var message = '<button class="ink-close">×</button><p><b>Erro:</b> ' + message_string + '</p>';
-				var error_alert = SAPO.Dom.Element.create('div', {
-						className : 'ink-alert error',
-						innerHTML : message
-					});
-				SAPO.Dom.Element.insertAfter(error_alert, SAPO.Dom.Selector.select('#messages')[0]);
-			}
-		}
-		//TODO: Use this in the near future. Add a button to bind this function probably.
-		function logout() {
-			SAPO.Utility.Cookie.remove("uid");
-			SAPO.Utility.Cookie.remove("token");
-			window.location.reload();
-		}
-		//Initial function to show user table
-		function show_user_table() {
-			if (user_token == false) {
-				console.log("No user Token");
-				return false;
-			};
-			//TODO: Error Handling
-			var table = new SAPO.Communication.JsonP(
-					"https://services.sapo.pt/Codebits/users?callback=build_user_table&token=" + user_token, {
-					evalJS : 'force',
-					onComplete : function (data) {
-						
-						//console.log(data);
-					},
-				});
-		}
-		//Blatant copy from the examples. Sorry!
-		function validateFormGeneric(target) {
-			//console.log(target);
-			var options = {
-				onSuccess : function (a, b) {}
-			};
-			
-			var result = SAPO.Ink.FormValidator.validate(target, options);
-			//console.log(result);
-			if (result) {
-				var values = SAPO.Utility.FormSerialize.serialize(SAPO.Dom.Selector.select("#login")[0]);
-				//console.log(values);
-				new SAPO.Communication.JsonP(
-					SAPO.Utility.Url.genQueryString("https://services.sapo.pt/Codebits/gettoken?callback=authenticate", values), {
-					evalJS : 'force',
-					onComplete : function (data) {
-						//console.log("completed ajax call");
-					},
-				});
-			}
-			return result;
-		}
-		//$(document).ready equivalent?
-		SAPO.Dom.Loaded.run(function () {
-			var loginform = SAPO.Dom.Selector.select('#login');
-			SAPO.Dom.Event.observe(loginform[0], 'submit', function (e) {
-				var target = SAPO.Dom.Event.element(e);
-				SAPO.Dom.Event.stop(e);
-				validateFormGeneric(target);
-			});
-			show_user_table();
 		});
+		return images;
+	};
+	var html = '<div class="ink-container" style="max-width: 100%; box-sizing: border-box; height: auto;">';
+	html += '<div class="ink-l100"><div class="ink-l100"><h2>' + data["name"] + '</h2></div><div class="ink-l20 ink-m100 ink-s100">' + draw_avatar(data["md5mail"], data["nick"]) + sidebar + '</div><div class="ink-l80 ink-m100 ink-s100"><p>' + data["bio"].replace(/\n/g, '<br />') + '</p><p>' + badges.toString().replace(/\n/g, '<br />') + '</p></div></div>';
+	html += '</div>';
+	return html;
+}
+var t1;
+//Callback to build the user table
+function build_user_table(data) {
+	var t1 = new SAPO.Ink.Table(
+			'#t2', {
+			model : data,
+			fields : ['md5mail', 'name', 'twitter'],
+			sortableFields : '*',
+			fieldNames : {
+				md5mail : 'Imagem',
+				name : 'Nome',
+				twitter : 'Twitter'
+			},
+			formatters : {
+				md5mail : function (fieldValue, item, tdEl) {
+					if (!fieldValue)
+						return;
+					//console.log(fieldValue,item,tdEl);
+					tdEl.innerHTML = '<img width="50" height="50" class="user_image" onclick="detalhes(' + item.id + ')" data-id="' + item.id + '" data-lazyload="https://codebits.eu/avatars/' + fieldValue + '?s=50" />';
+				}
+			},
+			pageSize : 100
+		});
+	//Animate it. Just for the kicks.
+	SAPO.Effects.Slide.up('login', {
+		dur : 500
+	});
+}
+function lazyload(offset) {
+	console.log("Lazy Sunday!");
+	offset = offset ? offset : 0;
+	var images = SAPO.Dom.Selector.select("img[data-lazyload]");
+	SAPO.Utility.Array.each(images, function (value, array) {
+		//GTFO if we have a source set already
+		if (value.src != "")
+			return;
+		if (visible(value, offset))
+			value.src = value.dataset.lazyload;
+		//	if(visible(value, offset)) console.log("on the fold", value);
+	});
+}
+//if it's not above the fold or below
+function visible(element, offset) {
+	offset = offset ? offset : 0;
+	if (!below_viewport(element, offset) && !above_viewport(element, offset)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+//Is the element above the fold with a certain offset?
+function above_viewport(element, offset) {
+	return (SAPO.Dom.Element.offsetTop(element) - SAPO.Utility.Dimensions.scrollHeight() + offset) <= 0 ? true : false;
+}
+//Is the element below the fold with a certain offset?
+function below_viewport(element, offset) {
+	return ((SAPO.Utility.Dimensions.viewportHeight() + SAPO.Utility.Dimensions.scrollHeight() + offset) <= SAPO.Dom.Element.offsetTop(element)) ? true : false;
+}
+//Authenticate function
+function authenticate(data) {
+	//If we receive a response and a token
+	if (data && data.token) {
+		//Set cookies so we don't have to run the ajax call again
+		if (data.token)
+			SAPO.Utility.Cookie.set("token", data.token, 600);
+		//TODO: I'll use this somewhere in the near future. "Stay tooned"
+		if (data.uid)
+			SAPO.Utility.Cookie.set("uid", data.uid, 600);
+		user_token = data.token;
+		show_user_table();
+	} else {
+		//If we don't have a token or a data, we'll show an error message
+		//console.log(data);
+		console.log("Login Failed");
+		var message_string = "Ocorreu um erro";
+		if (data.error.msg)
+			message_string = data.error.msg;
+		var message = '<button class="ink-close">×</button><p><b>Erro:</b> ' + message_string + '</p>';
+		var error_alert = SAPO.Dom.Element.create('div', {
+				className : 'ink-alert error',
+				innerHTML : message
+			});
+		SAPO.Dom.Element.insertAfter(error_alert, SAPO.Dom.Selector.select('#messages')[0]);
+	}
+}
+//TODO: Use this in the near future. Add a button to bind this function probably.
+function logout() {
+	SAPO.Utility.Cookie.remove("uid");
+	SAPO.Utility.Cookie.remove("token");
+	window.location.reload();
+}
+//Initial function to show user table
+function show_user_table() {
+	if (user_token == false) {
+		console.log("No user Token");
+		return false;
+	}
+	//TODO: Error Handling
+	var table = new SAPO.Communication.JsonP(
+			"https://services.sapo.pt/Codebits/users?callback=build_user_table&token=" + user_token, {
+			evalJS : 'force',
+			onComplete : function (data) {
+				
+				//console.log(data);
+			},
+		});
+}
+//Blatant copy from the examples. Sorry!
+function validateFormGeneric(target) {
+	//console.log(target);
+	var options = {
+		onSuccess : function (a, b) {}
+	};
+	
+	var result = SAPO.Ink.FormValidator.validate(target, options);
+	//console.log(result);
+	if (result) {
+		var values = SAPO.Utility.FormSerialize.serialize(SAPO.Dom.Selector.select("#login")[0]);
+		//console.log(values);
+		new SAPO.Communication.JsonP(
+			SAPO.Utility.Url.genQueryString("https://services.sapo.pt/Codebits/gettoken?callback=authenticate", values), {
+			evalJS : 'force',
+			onComplete : function (data) {
+				//console.log("completed ajax call");
+			},
+		});
+	}
+	return result;
+}
+//$(document).ready equivalent?
+SAPO.Dom.Loaded.run(function () {
+	var interval = false;
+	//check if we have application cache available. No test on your API?
+	if (Modernizr.applicationcache)
+		SAPO.Utility.Cache.setMode("localstorage");
+	var loginform = SAPO.Dom.Selector.select('#login');
+	SAPO.Dom.Event.observe(loginform[0], 'submit', function (e) {
+		var target = SAPO.Dom.Event.element(e);
+		SAPO.Dom.Event.stop(e);
+		validateFormGeneric(target);
+	});
+	SAPO.Dom.Event.observe(window, "touchstart", function (e) {
+		if (interval) {
+			interval = window.clearInterval(interval);
+				console.log("cleared", interval);
+		} else {
+			interval = self.setInterval(lazyload(SAPO.Utility.Dimensions.viewportHeight()), 1000);
+			console.log("started", interval);
+		}
+	});
+	// SAPO.Dom.Event.observe(window, "touchmove", function(e){
+	// console.log("this is a drag (no pun intended)", e);
+	// });
+	//Copy-pasta from your website. Let me reverse engineer the logic behind this
+	//I've got to optimize this... A simple scroll to the bottom of the page calls the event 40 to 60 times...
+	SAPO.Dom.Event.observe(window, 'scroll', function () {
+		lazyload(SAPO.Utility.Dimensions.viewportHeight());
+	});
+	//Observe the event the pagination clicks. Can't do it like this... Will try to modify the prototype below. This is hacky!
+	// SAPO.Dom.Event.observe(".pagination a", 'click', function (e) {
+	// lazyload(SAPO.Utility.Dimensions.viewportHeight());
+	// console.log(e);
+	// });
+	SAPO.Ink.Table.prototype.refresh = function () {
+		this._query(function (err, items) {
+			var tbodyEl = document.createElement('tbody');
+			var i,
+			I,
+			j,
+			J,
+			trEl,
+			tdEl,
+			item,
+			field,
+			value,
+			formatter;
+			J = this._options.fields.length;
+			for (i = 0, I = items.length; i < I; ++i) {
+				item = items[i];
+				trEl = document.createElement('tr');
+				for (j = 0; j < J; ++j) {
+					field = this._options.fields[j];
+					value = item[field];
+					formatter = this._options.formatters[field];
+					tdEl = document.createElement('td');
+					if (formatter) {
+						formatter(value, item, tdEl);
+					} else {
+						tdEl.innerHTML = value || '';
+					}
+					trEl.appendChild(tdEl);
+				}
+				tbodyEl.appendChild(trEl);
+			}
+			this._element.replaceChild(tbodyEl, this._tbodyEl);
+			this._tbodyEl = tbodyEl;
+			SAPO.Dom.Event.observe(this._tbodyEl, 'click', this._handlers.cellclick);
+		}
+			.bindObj(this));
+		SAPO.Dom.Event.fire(window, 'scroll');
+	};
+	show_user_table();
+	//Hacky but works, fire the scroll and unify it
+	SAPO.Dom.Event.fire(window, 'scroll');
+});
