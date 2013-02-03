@@ -1,0 +1,4 @@
+# robotstxt.org/
+# Don't index this for no reason please
+User-agent: *
+Disallow: /
