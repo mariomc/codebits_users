@@ -286,11 +286,15 @@ SAPO.Dom.Loaded.run(function () {
 		SAPO.Dom.Event.stop(e);
 		validateFormGeneric(target);
 	});
+	//I'm only testing with an Android and Chrome touch events emulator. Need a lab or iphone sdk to emulate better.
 	SAPO.Dom.Event.observe(window, "touchstart", function (e) {
+		//Proof of concept. Usually this event is called twice while dragging - when starting and when ending. I might be wrong. Uncharted territory here...
 		if (interval) {
+		//if we've set this already, clear it
 			interval = window.clearInterval(interval);
 				console.log("cleared", interval);
 		} else {
+			//if not, set a timeout for while dragging.
 			interval = self.setInterval(lazyload(SAPO.Utility.Dimensions.viewportHeight()), 1000);
 			console.log("started", interval);
 		}
@@ -298,7 +302,7 @@ SAPO.Dom.Loaded.run(function () {
 	// SAPO.Dom.Event.observe(window, "touchmove", function(e){
 	// console.log("this is a drag (no pun intended)", e);
 	// });
-	//Copy-pasta from your website. Let me reverse engineer the logic behind this
+	//Copy-pasta from your website. Let me reverse engineer the logic behind it
 	//I've got to optimize this... A simple scroll to the bottom of the page calls the event 40 to 60 times...
 	SAPO.Dom.Event.observe(window, 'scroll', function () {
 		lazyload(SAPO.Utility.Dimensions.viewportHeight());
