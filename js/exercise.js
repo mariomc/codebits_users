@@ -24,7 +24,8 @@
 var cookie = SAPO.Utility.Cookie.get();
 var user_token = cookie.token ? cookie.token : false;
 //This is here to help me debug the modal, which I'm still learning how to use it properly.
-var mod;
+var mod, t1, original_model, filtered_model;
+
 function detalhes_callback(data) {
 	//TODO: Better Error Handling
 	if (data.error) {
@@ -145,10 +146,18 @@ function generate_popup(data) {
 	html += '</div>';
 	return html;
 }
-var t1;
 //Callback to build the user table
 function build_user_table(data) {
-	var t1 = new SAPO.Ink.Table(
+	//Loop the data
+	SAPO.Utility.Array.each(data, function(obj,index){
+		//console.log("runned this", obj, index);
+		for(var prop in obj) {
+			//Add a string property to search for the records
+			data[index]["text"] = data[index]["text"] ? data[index]["text"] + " "  +data[index][prop] : " ";
+		}
+	});
+
+	t1 = new SAPO.Ink.Table(
 			'#t2', {
 			model : data,
 			fields : ['md5mail', 'name', 'twitter'],
@@ -168,12 +177,18 @@ function build_user_table(data) {
 			},
 			pageSize : 100
 		});
+	original_model = data;
 	//Animate it. Just for the kicks.
 	SAPO.Effects.Slide.up('login', {
-		dur : 500
+		dur : 500,
+		after: function(){
+			SAPO.Dom.Css.removeClassName("search", "hidden");
+			SAPO.Dom.Css.removeClassName("logout", "hidden");
+		}
 	});
 }
 function lazyload(offset) {
+	//TODO: For the throbber, instead of changing source, I'm adding a background image of the animated gif. This, however, has some problems with the dreaded IE in some versions as well as transparent pngs.
 	console.log("Lazy Sunday!");
 	offset = offset ? offset : 0;
 	var images = SAPO.Dom.Selector.select("img[data-lazyload]");
@@ -209,10 +224,10 @@ function authenticate(data) {
 	if (data && data.token) {
 		//Set cookies so we don't have to run the ajax call again
 		if (data.token)
-			SAPO.Utility.Cookie.set("token", data.token, 600);
+			SAPO.Utility.Cookie.set("token", data.token, 6000);
 		//TODO: I'll use this somewhere in the near future. "Stay tooned"
 		if (data.uid)
-			SAPO.Utility.Cookie.set("uid", data.uid, 600);
+			SAPO.Utility.Cookie.set("uid", data.uid, 6000);
 		user_token = data.token;
 		show_user_table();
 	} else {
@@ -286,11 +301,27 @@ SAPO.Dom.Loaded.run(function () {
 		SAPO.Dom.Event.stop(e);
 		validateFormGeneric(target);
 	});
+	SAPO.Dom.Event.observe(SAPO.Dom.Selector.select('#text-input')[0], 'keyup', function (e) {
+		//console.log("teste", e);
+		filtered_model = [];
+		SAPO.Utility.Array.each(original_model, function(value,index){
+			if(value["text"].indexOf(e.srcElement.value) > -1) filtered_model.push(value);
+		});
+		//Guys you need to correct your SAPO.Ink.Table _localQuery method to validate the model length. When you set an empty model, it blows up. Just comment this line below and see for yourself
+		if(filtered_model.length == 0) filtered_model = [{}];
+		//console.log("modelo filtrado", filtered_model);
+		t1.setModel(filtered_model);
+		
+	});
+	//I'm only testing with an Android and Chrome touch events emulator. Need a lab or iphone sdk to emulate better.
 	SAPO.Dom.Event.observe(window, "touchstart", function (e) {
+		//Proof of concept. Usually this event is called twice while dragging - when starting and when ending. I might be wrong. Uncharted territory here...
 		if (interval) {
+		//if we've set this already, clear it
 			interval = window.clearInterval(interval);
 				console.log("cleared", interval);
 		} else {
+			//if not, set a timeout for while dragging.
 			interval = self.setInterval(lazyload(SAPO.Utility.Dimensions.viewportHeight()), 1000);
 			console.log("started", interval);
 		}
@@ -298,9 +329,10 @@ SAPO.Dom.Loaded.run(function () {
 	// SAPO.Dom.Event.observe(window, "touchmove", function(e){
 	// console.log("this is a drag (no pun intended)", e);
 	// });
-	//Copy-pasta from your website. Let me reverse engineer the logic behind this
+	//Copy-pasta from your website. Let me reverse engineer the logic behind it
 	//I've got to optimize this... A simple scroll to the bottom of the page calls the event 40 to 60 times...
 	SAPO.Dom.Event.observe(window, 'scroll', function () {
+	//Call the Viewport height as the offset to cover some threshold and page down events properly
 		lazyload(SAPO.Utility.Dimensions.viewportHeight());
 	});
 	//Observe the event the pagination clicks. Can't do it like this... Will try to modify the prototype below. This is hacky!
@@ -348,5 +380,6 @@ SAPO.Dom.Loaded.run(function () {
 	};
 	show_user_table();
 	//Hacky but works, fire the scroll and unify it
+	//I could set an alias event for the scroll but I'm not yet quite sure how to do this with your library
 	SAPO.Dom.Event.fire(window, 'scroll');
 });
