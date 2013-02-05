@@ -58,6 +58,15 @@
 		<div class="ink-container ink-vspace">
 			<div class="ink-vspace">
 				<p class="">Login at will. It's all Ajax + HTML. No PHP or persistent storage involved. Only cookies to store your Codebits API Session.</p>
+				<div class="control hidden" id="search">
+					<label for="text-input" class="short">Search</label>
+					<input id="text-input" type="text" placeholder="Search Users" class="medium">
+				</div>
+				<div class="control hidden" id="logout">
+					<button class="ink-button warning" onclick="logout();">Logout</button>
+
+				</div>
+
 			</div>
 			<div class="ink-vspace ink-row">
 			<div class="ink-l33 ink-m33 s33"><p></p></div>
@@ -77,7 +86,8 @@
                         <input type="submit" class="ink-button info">
                     </div>
                 <fieldset>
-				</form></div>
+				</form>
+				</div>
 			<table id="t2" class="ink-zebra"></table>
 			<div id="xpto" class="hidden"></div>
 	<script type="text/javascript" src="./js/exercise.js"></script>	
