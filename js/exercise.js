@@ -305,7 +305,7 @@ SAPO.Dom.Loaded.run(function () {
 		//console.log("teste", e);
 		filtered_model = [];
 		SAPO.Utility.Array.each(original_model, function(value,index){
-			if(value["text"].indexOf(e.srcElement.value) > -1) filtered_model.push(value);
+			if(value["text"].toLowerCase().indexOf(e.srcElement.value.toLowerCase()) > -1) filtered_model.push(value);
 		});
 		//Guys you need to correct your SAPO.Ink.Table _localQuery method to validate the model length. When you set an empty model, it blows up. Just comment this line below and see for yourself
 		if(filtered_model.length == 0) filtered_model = [{}];
